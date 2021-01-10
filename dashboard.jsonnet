@@ -44,9 +44,7 @@ local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
 ).addPanel(
     resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{groupname=~"$processes"}[$interval])'),
     gridPos + {'x': gridPos.w}
-)
-
-;
+);
 
 {
   grafanaDashboards:: {
