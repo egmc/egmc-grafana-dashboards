@@ -21,30 +21,34 @@ local resourcePanel(title="",expr="") =
   );
 
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
-
+local gridPosHalf={'x':0, 'y':0, 'w':6, 'h': 5};
 
 local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
 .addTemplate(
     template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
-).addPanel(
-    resourcePanel(title="num processes",expr="namedprocess_namegroup_num_procs{groupname=~\"$processes\"}"),
+)
+.addTemplate(
+    template.new(hide=true,multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)')
+)
+.addRow(grafana.row.new(repeat="instance", title="$instance").addPanel(
+    resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance",groupname=~"$processes"}'),
     gridPos
 ).addPanel(
-    resourcePanel(title="cpu",expr="sum (rate(namedprocess_namegroup_cpu_seconds_total{groupname=~\"$processes\"}[$interval]) )without (mode)"),
+    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$interval]) )without (mode)'),
     gridPos + {'x': gridPos.w}
 ).addPanel(
-    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{groupname=~"$processes", memtype="resident"} > 0'),
+    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="resident"} > 0'),
     gridPos
 ).addPanel(
-    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{groupname=~"$processes", memtype="virtual"}'),
-    gridPos + {'x': gridPos.w}
+    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="virtual"}'),
+    gridPosHalf + {'x': gridPos.w}
 ).addPanel(
-    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{groupname=~"$processes"}[$interval])'),
-    gridPos
+    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance",groupname=~"$processes"}[$interval])'),
+    gridPosHalf + {'x': gridPos.w + gridPosHalf.w}
 ).addPanel(
-    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{groupname=~"$processes"}[$interval])'),
-    gridPos + {'x': gridPos.w}
-);
+    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance",groupname=~"$processes"}[$interval])'),
+    gridPosHalf + {'x': gridPos.w}
+));
 
 {
   grafanaDashboards:: {
