@@ -30,7 +30,32 @@ local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
 .addTemplate(
     template.new(hide=true,multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)')
 )
-.addRow(grafana.row.new(repeat="instance", title="$instance").addPanel(
+.addRow(grafana.row.new(repeat="instance", title="$instance")
+.addPanel(
+    grafana.pieChartPanel.new(title="num processes(topk)",datasource='prometheus',legendType='On graph').addTarget(
+        prometheus.target(
+          expr='topk(5, namedprocess_namegroup_num_procs{instance=~"$instance",groupname=~"$processes"})',
+          legendFormat='{{groupname}}'
+        )
+    )
+)
+.addPanel(
+    grafana.pieChartPanel.new(title="cpu(topk)",datasource='prometheus',legendType='On graph').addTarget(
+        prometheus.target(
+          expr='topk(5, sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$interval]) )without (mode))',
+          legendFormat='{{groupname}}'
+        )
+    )
+)
+.addPanel(
+    grafana.pieChartPanel.new(title="resident memory(topk)",datasource='prometheus',legendType='On graph').addTarget(
+        prometheus.target(
+          expr='topk(5, namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="resident"} > 0)',
+          legendFormat='{{groupname}}'
+        )
+    )
+)
+.addPanel(
     resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance",groupname=~"$processes"}'),
     gridPos
 ).addPanel(
