@@ -5,6 +5,11 @@ local prometheus = grafana.prometheus;
 local template = grafana.template;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
+local processMemoryDashboard = dashboard.new('process memory dashboard grafonnet', tags=['grafonnet'], uid='process-memory-grafonnet');
+
+local instanceTemplate = template.new(hide=true,multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)');
+
+
 /* local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h'); */
 
 local resourcePanel(title="",expr="") =
@@ -26,7 +31,7 @@ local namedProcessesRet = namedProcesses
     template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
 )
 .addTemplate(
-    template.new(hide=true,multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)')
+    instanceTemplate
 )
 .addRow(grafana.row.new(repeat="instance", title="$instance")
 .addPanel(
@@ -73,8 +78,56 @@ local namedProcessesRet = namedProcesses
     gridPosHalf + {'x': gridPos.w}
 ));
 
+local treePanel = {
+      "datasource": "prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "options": {
+        "colorField": "groupname",
+        "sizeField": "Value",
+        "textField": "groupname",
+        "tiling": "treemapSquarify"
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "expr": "sum(namedprocess_namegroup_memory_bytes{instance=~\"$instance\",groupname=~\".+\", memtype=\"resident\"} > 0) by (groupname)",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "{{groupname}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "process resident memory map",
+      "transformations": [],
+      "transparent": true,
+      "type": "marcusolsson-treemap-panel"
+  };
+
+local processMemoryDashboardRet = processMemoryDashboard
+.addTemplate(instanceTemplate)
+.addRow(grafana.row.new(repeat="instance", title="$instance"))
+.addPanels([treePanel])
+;
+
 {
   grafanaDashboards:: {
-    named_processes_grafonnet: namedProcessesRet
+    named_processes_grafonnet: namedProcessesRet,
+    process_memory_grafonnet: processMemoryDashboardRet
   }
 }
