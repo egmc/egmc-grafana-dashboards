@@ -5,9 +5,7 @@ local prometheus = grafana.prometheus;
 local template = grafana.template;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
-local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h');
-/* local tpInteval = template.interval(300, '10s', '10m', '', null, 'interval', 'auto,5m,10m,20m'); */
-
+/* local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h'); */
 
 local resourcePanel(title="",expr="") =
   graphPanel.new(
@@ -23,7 +21,7 @@ local resourcePanel(title="",expr="") =
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
 local gridPosHalf={'x':0, 'y':0, 'w':6, 'h': 5};
 
-local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
+local namedProcessesRet = namedProcesses
 .addTemplate(
     template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
 )
@@ -42,7 +40,7 @@ local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
 .addPanel(
     grafana.pieChartPanel.new(title="cpu(topk)",datasource='prometheus',legendType='On graph').addTarget(
         prometheus.target(
-          expr='topk(5, sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$interval]) )without (mode))',
+          expr='topk(5, sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval]) )without (mode))',
           legendFormat='{{groupname}}'
         )
     )
@@ -59,7 +57,7 @@ local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
     resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance",groupname=~"$processes"}'),
     gridPos
 ).addPanel(
-    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$interval]) )without (mode)'),
+    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval]) )without (mode)'),
     gridPos + {'x': gridPos.w}
 ).addPanel(
     resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="resident"} > 0'),
@@ -68,10 +66,10 @@ local namedProcessesRet = namedProcesses.addTemplate(tpInteval)
     resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="virtual"}'),
     gridPosHalf + {'x': gridPos.w}
 ).addPanel(
-    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance",groupname=~"$processes"}[$interval])'),
+    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval])'),
     gridPosHalf + {'x': gridPos.w + gridPosHalf.w}
 ).addPanel(
-    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance",groupname=~"$processes"}[$interval])'),
+    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval])'),
     gridPosHalf + {'x': gridPos.w}
 ));
 
