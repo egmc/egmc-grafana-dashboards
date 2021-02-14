@@ -12,10 +12,11 @@ local instanceTemplate = template.new(multi=false,refresh=1,name='instance',data
 
 /* local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h'); */
 
-local resourcePanel(title="",expr="") =
+local resourcePanel(title="",expr="", format="short") =
   graphPanel.new(
     title=title,
     datasource='prometheus',
+    format=format
   ).addTarget(
     prometheus.target(
       expr=expr,
@@ -84,13 +85,13 @@ local namedProcessesRet = namedProcesses
     gridPos + {'x': gridPos.w}
 ));
 
-local treePanel(expr="", title="", pos={"h":0,"w":0,"x":0,"y":0}) = {
+local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0}) = {
       "datasource": "prometheus",
       "fieldConfig": {
         "defaults": {
           "custom": {},
           "mappings": [],
-          "unit": "bytes"
+          "unit": format
         },
         "overrides": []
       },
@@ -123,26 +124,26 @@ local treePanel(expr="", title="", pos={"h":0,"w":0,"x":0,"y":0}) = {
 local processMemoryDashboardRet = processMemoryDashboard
 .addTemplate(instanceTemplate)
 .addPanels([
-    treePanel('sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', "process resident memory map", basePos + {"w": baseWidthWide}),
-    treePanel('sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)',"cpu map", basePos + {"x": baseWidthWide, "w": baseWidthWide})
+    treePanel(expr='sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', title="process resident memory map", format="bytes", pos=basePos + {"w": baseWidthWide}),
+    treePanel(expr='sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)', title="cpu map", format="s", pos=basePos + {"x": baseWidthWide, "w": baseWidthWide})
 ])
 .addPanel(
     resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance"}'),
     basePos + {"y": baseHight * 1, "w": baseWidth }
 ).addPanel(
-    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode)'),
+    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode)', format="s"),
     basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 1}
 ).addPanel(
-    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0'),
+    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0', format="bytes"),
     basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 2}
 ).addPanel(
-    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}'),
+    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}', format="bytes"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": 0}
 ).addPanel(
-    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])'),
+    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 1}
 ).addPanel(
-    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])'),
+    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 2}
 )
 ;
