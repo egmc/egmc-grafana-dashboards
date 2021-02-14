@@ -26,6 +26,12 @@ local resourcePanel(title="",expr="") =
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
 local gridPosHalf={'x':0, 'y':0, 'w':6, 'h': 5};
 
+local baseHight = 10;
+local baseWidth = 8;
+local baseWidthWide = 12;
+local basePos = {"h":baseHight,"w":baseWidth,"x":0,"y":0};
+
+
 local namedProcessesRet = namedProcesses
 .addTemplate(
     template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
@@ -78,7 +84,7 @@ local namedProcessesRet = namedProcesses
     gridPos + {'x': gridPos.w}
 ));
 
-local treePanel(expr="", title="", x=0) = {
+local treePanel(expr="", title="", pos={"h":0,"w":0,"x":0,"y":0}) = {
       "datasource": "prometheus",
       "fieldConfig": {
         "defaults": {
@@ -88,12 +94,7 @@ local treePanel(expr="", title="", x=0) = {
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": x,
-        "y": 0
-      },
+      "gridPos": pos,
       "options": {
         "colorField": "groupname",
         "sizeField": "Value",
@@ -118,31 +119,31 @@ local treePanel(expr="", title="", x=0) = {
       "transparent": false,
       "type": "marcusolsson-treemap-panel"
   };
- 
+
 local processMemoryDashboardRet = processMemoryDashboard
 .addTemplate(instanceTemplate)
 .addPanels([
-    treePanel('sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)',"process resident memory map"),
-    treePanel('sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)',"cpu map", 12)
+    treePanel('sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', "process resident memory map", basePos + {"w": baseWidthWide}),
+    treePanel('sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)',"cpu map", basePos + {"x": baseWidthWide, "w": baseWidthWide})
 ])
 .addPanel(
     resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance"}'),
-    gridPos
+    basePos + {"y": baseHight * 1, "w": baseWidth }
 ).addPanel(
     resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode)'),
-    gridPos + {'x': gridPos.w}
+    basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 1}
 ).addPanel(
     resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0'),
-    gridPos
+    basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 2}
 ).addPanel(
     resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}'),
-    gridPos + {'x': gridPos.w}
+    basePos + {"y": baseHight * 2, "w": baseWidth, "x": 0}
 ).addPanel(
     resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])'),
-    gridPos
+    basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 1}
 ).addPanel(
     resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])'),
-    gridPos + {'x': gridPos.w}
+    basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 2}
 )
 ;
 
