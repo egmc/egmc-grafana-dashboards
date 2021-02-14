@@ -5,7 +5,7 @@ local prometheus = grafana.prometheus;
 local template = grafana.template;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
-local processMemoryDashboard = dashboard.new('process exporter dashboard with treemap', tags=['process'], uid='process-exporter-with-tree');
+local processMemoryDashboard = dashboard.new('process exporter dashboard with treemap', tags=['process'], uid='process-exporter-with-tree', editable=true);
 
 local instanceTemplate = template.new(multi=false,refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)');
 
@@ -130,6 +130,8 @@ local processMemoryDashboardRet = processMemoryDashboard
   )
 )
 .addTemplate(instanceTemplate)
+.addRequired('datasource', 'Prometheus', 'prometheus', '1.0.0')
+.addRequired('panel', 'Treemap', 'treemap', '0.5.0')
 .addPanels([
     treePanel(expr='sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', title="process resident memory map", format="bytes", pos=basePos + {"w": baseWidthWide}),
     treePanel(expr='sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)', title="cpu map", format="s", pos=basePos + {"x": baseWidthWide, "w": baseWidthWide})
