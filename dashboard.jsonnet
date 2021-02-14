@@ -5,7 +5,7 @@ local prometheus = grafana.prometheus;
 local template = grafana.template;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
-local processMemoryDashboard = dashboard.new('process memory dashboard grafonnet', tags=['grafonnet'], uid='process-memory-grafonnet');
+local processMemoryDashboard = dashboard.new('process exporter dashboard with treemap', tags=['process'], uid='process-exporter-with-tree');
 
 local instanceTemplate = template.new(multi=false,refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)');
 
@@ -15,7 +15,7 @@ local instanceTemplate = template.new(multi=false,refresh=1,name='instance',data
 local resourcePanel(title="",expr="", format="short") =
   graphPanel.new(
     title=title,
-    datasource='prometheus',
+    datasource='$PROMETHEUS_DS',
     format=format
   ).addTarget(
     prometheus.target(
@@ -35,7 +35,7 @@ local basePos = {"h":baseHight,"w":baseWidth,"x":0,"y":0};
 
 local namedProcessesRet = namedProcesses
 .addTemplate(
-    template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
+    template.new(multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='processes',datasource='$PROMETHEUS_DS',query='label_values(namedprocess_namegroup_cpu_seconds_total,groupname)')
 )
 .addTemplate(
     instanceTemplate
@@ -102,7 +102,6 @@ local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0})
         "textField": "groupname",
         "tiling": "treemapSquarify"
       },
-      "pluginVersion": "7.2.0",
       "targets": [
         {
           "expr": expr,
@@ -122,6 +121,14 @@ local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0})
   };
 
 local processMemoryDashboardRet = processMemoryDashboard
+.addTemplate(
+  grafana.template.datasource(
+    'PROMETHEUS_DS',
+    'prometheus',
+    'Prometheus',
+    hide='label',
+  )
+)
 .addTemplate(instanceTemplate)
 .addPanels([
     treePanel(expr='sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', title="process resident memory map", format="bytes", pos=basePos + {"w": baseWidthWide}),
@@ -151,6 +158,6 @@ local processMemoryDashboardRet = processMemoryDashboard
 {
   grafanaDashboards:: {
     named_processes_grafonnet: namedProcessesRet,
-    process_memory_grafonnet: processMemoryDashboardRet
+    process_exporter_with_tree: processMemoryDashboardRet
   }
 }
