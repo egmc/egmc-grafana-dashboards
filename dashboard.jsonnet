@@ -7,7 +7,7 @@ local template = grafana.template;
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
 local processMemoryDashboard = dashboard.new('process memory dashboard grafonnet', tags=['grafonnet'], uid='process-memory-grafonnet');
 
-local instanceTemplate = template.new(hide=true,multi=true,includeAll=true,allValues='.+',current='all',refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)');
+local instanceTemplate = template.new(multi=false,refresh=1,name='instance',datasource='prometheus',query='label_values(namedprocess_namegroup_cpu_seconds_total,instance)');
 
 
 /* local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h'); */
@@ -69,16 +69,16 @@ local namedProcessesRet = namedProcesses
     gridPos
 ).addPanel(
     resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance",groupname=~"$processes", memtype="virtual"}'),
-    gridPosHalf + {'x': gridPos.w}
+    gridPos + {'x': gridPos.w}
 ).addPanel(
     resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval])'),
     gridPosHalf + {'x': gridPos.w + gridPosHalf.w}
 ).addPanel(
     resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance",groupname=~"$processes"}[$__rate_interval])'),
-    gridPosHalf + {'x': gridPos.w}
+    gridPos + {'x': gridPos.w}
 ));
 
-local treePanel = {
+local treePanel(expr="", title="", x=0) = {
       "datasource": "prometheus",
       "fieldConfig": {
         "defaults": {
@@ -89,10 +89,10 @@ local treePanel = {
         "overrides": []
       },
       "gridPos": {
-        "h": 15,
-        "w": 24,
-        "x": 0,
-        "y": 1
+        "h": 10,
+        "w": 12,
+        "x": x,
+        "y": 0
       },
       "options": {
         "colorField": "groupname",
@@ -103,7 +103,7 @@ local treePanel = {
       "pluginVersion": "7.2.0",
       "targets": [
         {
-          "expr": "sum(namedprocess_namegroup_memory_bytes{instance=~\"$instance\",groupname=~\".+\", memtype=\"resident\"} > 0) by (groupname)",
+          "expr": expr,
           "format": "table",
           "instant": true,
           "interval": "",
@@ -113,16 +113,37 @@ local treePanel = {
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "process resident memory map",
+      "title": title,
       "transformations": [],
-      "transparent": true,
+      "transparent": false,
       "type": "marcusolsson-treemap-panel"
   };
-
+ 
 local processMemoryDashboardRet = processMemoryDashboard
 .addTemplate(instanceTemplate)
-.addRow(grafana.row.new(repeat="instance", title="$instance"))
-.addPanels([treePanel])
+.addPanels([
+    treePanel('sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)',"process resident memory map"),
+    treePanel('sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)',"cpu map", 12)
+])
+.addPanel(
+    resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance"}'),
+    gridPos
+).addPanel(
+    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode)'),
+    gridPos + {'x': gridPos.w}
+).addPanel(
+    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0'),
+    gridPos
+).addPanel(
+    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}'),
+    gridPos + {'x': gridPos.w}
+).addPanel(
+    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])'),
+    gridPos
+).addPanel(
+    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])'),
+    gridPos + {'x': gridPos.w}
+)
 ;
 
 {
