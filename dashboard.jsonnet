@@ -86,7 +86,7 @@ local namedProcessesRet = namedProcesses
 ));
 
 local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0}) = {
-      "datasource": "prometheus",
+      "datasource": "$PROMETHEUS_DS",
       "fieldConfig": {
         "defaults": {
           "custom": {},
