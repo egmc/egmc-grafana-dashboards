@@ -22,7 +22,15 @@ local resourcePanel(title="",expr="", format="short") =
       expr=expr,
       legendFormat='{{groupname}}',
     )
-  );
+  ) +
+  {
+    "tooltip": {
+      "shared": true,
+      "sort": 2,
+      "value_type": "individual"
+    }
+  }
+  ;
 
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
 local gridPosHalf={'x':0, 'y':0, 'w':6, 'h': 5};
@@ -91,7 +99,10 @@ local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0})
         "defaults": {
           "custom": {},
           "mappings": [],
-          "unit": format
+          "unit": format,
+          "color": {
+            "mode": "continuous-RdYlGr"
+          }
         },
         "overrides": []
       },
@@ -154,6 +165,15 @@ local processMemoryDashboardRet = processMemoryDashboard
 ).addPanel(
     resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 2}
+).addPanel(
+    resourcePanel(title="voluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="voluntary"}[$__rate_interval])'),
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": 0}
+).addPanel(
+    resourcePanel(title="nonvoluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="nonvoluntary"}[$__rate_interval])'),
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 1}
+).addPanel(
+    resourcePanel(title="open file desc",expr='namedprocess_namegroup_open_filedesc{instance=~"$instance"}'),
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 2}
 )
 ;
 
