@@ -34,6 +34,7 @@ local resourcePanel(title="",expr="", format="short", stack=true) =
 
 local tablePanel(title="",expr="") =
 {
+  "datasource": "$PROMETHEUS_DS",
   "type": "table",
   "title": title,
   "targets": [
@@ -69,8 +70,7 @@ local tablePanel(title="",expr="") =
         "renamePattern": "uptime"
       }
     }
-  ],
-  "datasource": null
+  ]
 }
   ;
 
