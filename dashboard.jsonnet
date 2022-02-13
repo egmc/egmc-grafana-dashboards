@@ -206,20 +206,20 @@ local processMemoryDashboardRet = processMemoryDashboard
     resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}', format="bytes"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 2}
 ).addPanel(
-    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
-    basePos + {"y": baseHight * 3, "w": baseWidthWide, "x": baseWidthWide * 0}
-).addPanel(
-    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
-    basePos + {"y": baseHight * 3, "w": baseWidthWide, "x": baseWidthWide * 1}
-).addPanel(
     resourcePanel(title="voluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="voluntary"}[$__rate_interval])'),
-    basePos + {"y": baseHight * 4, "w": baseWidth, "x": 0}
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": 0}
 ).addPanel(
     resourcePanel(title="nonvoluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="nonvoluntary"}[$__rate_interval])'),
-    basePos + {"y": baseHight * 4, "w": baseWidth, "x": baseWidth * 1}
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 1}
 ).addPanel(
     resourcePanel(title="open file desc",expr='namedprocess_namegroup_open_filedesc{instance=~"$instance"}'),
-    basePos + {"y": baseHight * 4, "w": baseWidth, "x": baseWidth * 2}
+    basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 2}
+).addPanel(
+    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
+    basePos + {"y": baseHight * 4, "w": baseWidthWide, "x": baseWidthWide * 0}
+).addPanel(
+    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
+    basePos + {"y": baseHight * 4, "w": baseWidthWide, "x": baseWidthWide * 1}
 ).addPanel(
     resourcePanel(title="major page faults",expr='rate(namedprocess_namegroup_major_page_faults_total{instance=~"$instance"}[$__rate_interval])', format="short", stack=false),
     basePos + {"y": baseHight * 5, "w": baseWidthWide, "x": baseWidthWide * 0}
