@@ -3,6 +3,7 @@ local dashboard = grafana.dashboard;
 local graphPanel = grafana.graphPanel;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
+local table = grafana.tablePanel;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
 local processMemoryDashboard = dashboard.new('process exporter dashboard with treemap', tags=['process'], uid='process-exporter-with-tree', editable=true);
@@ -23,13 +24,55 @@ local resourcePanel(title="",expr="", format="short", stack=true) =
       expr=expr,
       legendFormat='{{groupname}}',
   )
-)  + {
-      "tooltip": {
-        "shared": true,
-        "sort": 2,
-        "value_type": "individual"
+) + {
+  "tooltip": {
+    "shared": true,
+    "sort": 2,
+    "value_type": "individual"
+  }
+};
+
+local tablePanel(title="",expr="") =
+{
+  "type": "table",
+  "title": title,
+  "targets": [
+    {
+      "expr": expr,
+      "legendFormat": "{{groupname}}",
+      "interval": "",
+      "exemplar": true,
+      "instant": true,
+      "format": "table"
     }
-  };
+  ],
+  "options": {
+    "showHeader": true,
+    "sortBy": [
+      {
+        "displayName": "uptime",
+        "desc": true
+      }
+    ],
+    "frameIndex": 0
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "s"
+    }
+  },
+  "transformations": [
+    {
+      "id": "renameByRegex",
+      "options": {
+        "regex": "Value.*",
+        "renamePattern": "uptime"
+      }
+    }
+  ],
+  "datasource": null
+}
+  ;
 
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
 local gridPosHalf={'x':0, 'y':0, 'w':6, 'h': 5};
@@ -174,6 +217,9 @@ local processMemoryDashboardRet = processMemoryDashboard
 ).addPanel(
     resourcePanel(title="minor page faults",expr='rate(namedprocess_namegroup_minor_page_faults_total{instance=~"$instance"}[$__rate_interval])', format="short", stack=false),
     basePos + {"y": baseHight * 4, "w": baseWidthWide, "x": baseWidthWide * 1}
+).addPanel(
+    tablePanel(title="uptime", expr='time() - (avg by (groupname) (namedprocess_namegroup_oldest_start_time_seconds{instance=~"$instance"} > 0))'),
+    basePos + {"y": baseHight * 5, "w": 24, "x": baseWidthWide * 0}
 )
 ;
 
