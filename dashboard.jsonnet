@@ -3,6 +3,7 @@ local dashboard = grafana.dashboard;
 local graphPanel = grafana.graphPanel;
 local prometheus = grafana.prometheus;
 local template = grafana.template;
+local table = grafana.tablePanel;
 
 local namedProcesses = dashboard.new('named processes grafonnet', tags=['grafonnet'], uid='named-processes-grafonnet');
 local processMemoryDashboard = dashboard.new('process exporter dashboard with treemap', tags=['process'], uid='process-exporter-with-tree', editable=true);
@@ -12,24 +13,65 @@ local instanceTemplate = template.new(multi=false,refresh=1,name='instance',data
 
 /* local tpInteval = template.interval(current='10m',name='interval',query='auto,1m,5m,10m,30m,1h'); */
 
-local resourcePanel(title="",expr="", format="short") =
+local resourcePanel(title="",expr="", format="short", stack=true) =
   graphPanel.new(
     title=title,
     datasource='$PROMETHEUS_DS',
-    format=format
+    format=format,
+    stack=stack
   ).addTarget(
     prometheus.target(
       expr=expr,
       legendFormat='{{groupname}}',
-    )
-  ) +
-  {
-    "tooltip": {
-      "shared": true,
-      "sort": 2,
-      "value_type": "individual"
-    }
+  )
+) + {
+  "tooltip": {
+    "shared": true,
+    "sort": 2,
+    "value_type": "individual"
   }
+};
+
+local tablePanel(title="",expr="") =
+{
+  "datasource": "$PROMETHEUS_DS",
+  "type": "table",
+  "title": title,
+  "targets": [
+    {
+      "expr": expr,
+      "legendFormat": "{{groupname}}",
+      "interval": "",
+      "exemplar": true,
+      "instant": true,
+      "format": "table"
+    }
+  ],
+  "options": {
+    "showHeader": true,
+    "sortBy": [
+      {
+        "displayName": "uptime",
+        "desc": false
+      }
+    ],
+    "frameIndex": 0
+  },
+  "fieldConfig": {
+    "defaults": {
+      "unit": "s"
+    }
+  },
+  "transformations": [
+    {
+      "id": "renameByRegex",
+      "options": {
+        "regex": "Value.*",
+        "renamePattern": "uptime"
+      }
+    }
+  ]
+}
   ;
 
 local gridPos={'x':0, 'y':0, 'w':12, 'h': 10};
@@ -108,6 +150,7 @@ local treePanel(expr="", title="",format="short", pos={"h":0,"w":0,"x":0,"y":0})
       },
       "gridPos": pos,
       "options": {
+        "colorByField": "Value",
         "colorField": "groupname",
         "sizeField": "Value",
         "textField": "groupname",
@@ -144,36 +187,48 @@ local processMemoryDashboardRet = processMemoryDashboard
 .addRequired('datasource', 'Prometheus', 'prometheus', '1.0.0')
 .addRequired('panel', 'Treemap', 'marcusolsson-treemap-panel', '0.5.0')
 .addPanels([
-    treePanel(expr='sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0) by (groupname)', title="process resident memory map", format="bytes", pos=basePos + {"w": baseWidthWide}),
+    treePanel(expr='sum(namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="proportionalResident"} > 0) by (groupname)', title="proportional resident memory map", format="bytes", pos=basePos + {"w": baseWidthWide}),
     treePanel(expr='sum(rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval] ))  by (groupname)', title="cpu map", format="s", pos=basePos + {"x": baseWidthWide, "w": baseWidthWide})
 ])
 .addPanel(
+    resourcePanel(title="proportional resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="proportionalResident"} > 0', format="bytes"),
+    basePos + {"y": baseHight * 1, "w": baseWidthWide, "x":baseWidthWide * 0}
+).addPanel(
+    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode) > 0', format="s"),
+    basePos + {"y": baseHight * 1, "w": baseWidthWide, "x":baseWidthWide * 1}
+).addPanel(
+    resourcePanel(title="resident memory (average)",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} / ignoring(memtype) namedprocess_namegroup_num_procs > 0', format="bytes", stack=false),
+    basePos + {"y": baseHight * 2, "w": baseWidth, "x":baseWidth * 0}
+).addPanel(
     resourcePanel(title="num processes",expr='namedprocess_namegroup_num_procs{instance=~"$instance"}'),
-    basePos + {"y": baseHight * 1, "w": baseWidth }
-).addPanel(
-    resourcePanel(title="cpu",expr='sum (rate(namedprocess_namegroup_cpu_seconds_total{instance=~"$instance"}[$__rate_interval]) )without (mode)', format="s"),
-    basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 1}
-).addPanel(
-    resourcePanel(title="resident memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="resident"} > 0', format="bytes"),
-    basePos + {"y": baseHight * 1, "w": baseWidth, "x":baseWidth * 2}
-).addPanel(
-    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}', format="bytes"),
-    basePos + {"y": baseHight * 2, "w": baseWidth, "x": 0}
-).addPanel(
-    resourcePanel(title="read byte",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 1}
 ).addPanel(
-    resourcePanel(title="write byte",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps"),
+    resourcePanel(title="virtual memory",expr='namedprocess_namegroup_memory_bytes{instance=~"$instance", memtype="virtual"}', format="bytes"),
     basePos + {"y": baseHight * 2, "w": baseWidth, "x": baseWidth * 2}
 ).addPanel(
-    resourcePanel(title="voluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="voluntary"}[$__rate_interval])'),
+    resourcePanel(title="voluntary context switches",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="voluntary"}[$__rate_interval])'),
     basePos + {"y": baseHight * 3, "w": baseWidth, "x": 0}
 ).addPanel(
-    resourcePanel(title="nonvoluntary context switch",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="nonvoluntary"}[$__rate_interval])'),
+    resourcePanel(title="nonvoluntary context switches",expr='rate(namedprocess_namegroup_context_switches_total{instance=~"$instance", ctxswitchtype="nonvoluntary"}[$__rate_interval])'),
     basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 1}
 ).addPanel(
-    resourcePanel(title="open file desc",expr='namedprocess_namegroup_open_filedesc{instance=~"$instance"}'),
+    resourcePanel(title="file descripters",expr='namedprocess_namegroup_open_filedesc{instance=~"$instance"}'),
     basePos + {"y": baseHight * 3, "w": baseWidth, "x": baseWidth * 2}
+).addPanel(
+    resourcePanel(title="read bytes",expr='rate(namedprocess_namegroup_read_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
+    basePos + {"y": baseHight * 4, "w": baseWidthWide, "x": baseWidthWide * 0}
+).addPanel(
+    resourcePanel(title="write bytes",expr='rate(namedprocess_namegroup_write_bytes_total{instance=~"$instance"}[$__rate_interval])', format="Bps", stack=false),
+    basePos + {"y": baseHight * 4, "w": baseWidthWide, "x": baseWidthWide * 1}
+).addPanel(
+    resourcePanel(title="major page faults",expr='rate(namedprocess_namegroup_major_page_faults_total{instance=~"$instance"}[$__rate_interval])', format="short", stack=false),
+    basePos + {"y": baseHight * 5, "w": baseWidthWide, "x": baseWidthWide * 0}
+).addPanel(
+    resourcePanel(title="minor page faults",expr='rate(namedprocess_namegroup_minor_page_faults_total{instance=~"$instance"}[$__rate_interval])', format="short", stack=false),
+    basePos + {"y": baseHight * 5, "w": baseWidthWide, "x": baseWidthWide * 1}
+).addPanel(
+    tablePanel(title="uptime(oldest)", expr='time() - (avg by (groupname) (namedprocess_namegroup_oldest_start_time_seconds{instance=~"$instance"} > 0))'),
+    basePos + {"y": baseHight * 6, "w": 24, "x": baseWidthWide * 0}
 )
 ;
 
