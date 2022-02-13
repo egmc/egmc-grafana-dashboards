@@ -51,7 +51,7 @@ local tablePanel(title="",expr="") =
     "sortBy": [
       {
         "displayName": "uptime",
-        "desc": true
+        "desc": false
       }
     ],
     "frameIndex": 0
