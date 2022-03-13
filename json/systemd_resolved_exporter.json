@@ -18,6 +18,12 @@
     },
     {
       "type": "panel",
+      "id": "grafana-piechart-panel",
+      "name": "Pie Chart",
+      "version": "1.6.1"
+    },
+    {
+      "type": "panel",
       "id": "graph",
       "name": "Graph",
       "version": ""
@@ -46,9 +52,70 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1645859133269,
+  "iteration": 1647160365420,
   "links": [],
   "panels": [
+    {
+      "aliasColors": {},
+      "breakPoint": "50%",
+      "cacheTimeout": null,
+      "combine": {
+        "label": "Others",
+        "threshold": 0
+      },
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fontSize": "80%",
+      "format": "short",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "interval": null,
+      "legend": {
+        "percentage": true,
+        "show": true,
+        "values": false
+      },
+      "legendType": "On graph",
+      "links": [],
+      "nullPointMode": "connected",
+      "pieType": "pie",
+      "pluginVersion": "7.5.2",
+      "strokeWidth": 1,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "rate(systemd_resolved_cache_hits_total{instance=\"[[instance]]\"}[$__rate_interval])",
+          "format": "time_series",
+          "instant": false,
+          "interval": "60",
+          "legendFormat": "Cache Hits",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "rate(systemd_resolved_cache_misses_total{instance=\"[[instance]]\"}[$__rate_interval])",
+          "hide": false,
+          "instant": false,
+          "interval": "60",
+          "legendFormat": "Cache Misses",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Current Cache Hit Rate",
+      "transparent": true,
+      "type": "grafana-piechart-panel",
+      "valueName": "current"
+    },
     {
       "aliasColors": {},
       "bars": false,
@@ -64,11 +131,11 @@
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 0
       },
       "hiddenSeries": false,
-      "id": 11,
+      "id": 12,
       "legend": {
         "avg": false,
         "current": true,
@@ -132,102 +199,6 @@
         },
         {
           "$$hashKey": "object:477",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "hiddenSeries": false,
-      "id": 4,
-      "legend": {
-        "avg": false,
-        "current": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.5.2",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "rate(systemd_resolved_cache_misses_total{instance=\"[[instance]]\"}[$__rate_interval])",
-          "interval": "",
-          "legendFormat": "Cache Misses",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Cache Misses",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:355",
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:356",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -356,7 +327,7 @@
         "y": 9
       },
       "hiddenSeries": false,
-      "id": 6,
+      "id": 4,
       "legend": {
         "avg": false,
         "current": true,
@@ -384,9 +355,9 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "systemd_resolved_current_cache_size{instance=\"[[instance]]\"}",
+          "expr": "rate(systemd_resolved_cache_misses_total{instance=\"[[instance]]\"}[$__rate_interval])",
           "interval": "",
-          "legendFormat": "Current Cache Size",
+          "legendFormat": "Cache Misses",
           "refId": "A"
         }
       ],
@@ -394,7 +365,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Current Cache Size",
+      "title": "Cache Misses",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -410,7 +381,7 @@
       },
       "yaxes": [
         {
-          "$$hashKey": "object:509",
+          "$$hashKey": "object:355",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -419,7 +390,7 @@
           "show": true
         },
         {
-          "$$hashKey": "object:510",
+          "$$hashKey": "object:356",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -446,7 +417,7 @@
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 18
@@ -535,6 +506,102 @@
       "dashLength": 10,
       "dashes": false,
       "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "hiddenSeries": false,
+      "id": 6,
+      "legend": {
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.2",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "systemd_resolved_current_cache_size{instance=\"[[instance]]\"}",
+          "interval": "",
+          "legendFormat": "Current Cache Size",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Current Cache Size",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:509",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:510",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "${DS_PROMETHEUS}",
       "description": "note:make sure gather-dnssec option is enabled",
       "fieldConfig": {
         "defaults": {},
@@ -544,9 +611,9 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 18
+        "w": 24,
+        "x": 0,
+        "y": 27
       },
       "hiddenSeries": false,
       "id": 10,
